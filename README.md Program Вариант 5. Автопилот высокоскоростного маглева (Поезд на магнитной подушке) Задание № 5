@@ -10,18 +10,129 @@
     {
         static void Main()
         {
-            int[,] track = {
-            { 2, 3, 2, 1 },
-            { 4, 5, 6, 4 },  // эта строка имеет наибольшую сумму → будет помечена
-            { 1, 1, 2, 1 }
-        };
+        Console.WriteLine("=== Пункт 5: ScanGuidewayMatrix (контроль геометрии путепровода) ===\n");
 
-            Console.WriteLine("Исходная матрица:");
-            object value = MaglevControl.PrintMatrix(track);
-            Console.WriteLine("\nПредупреждающая матрица (опасные участки = 999):");
+                // Матрица отклонений (мм) от горизонтали: строки — участки пути, столбцы — точки замера
+                int[,] trackMatrix = new int[,]
+                {
+                {  2,  3,  1,  4,  5,  6,  2 },
+                {  3,  4,  8, 10,  9,  7,  3 },
+                {  1,  2,  3,  2,  1,  0,  1 },
+                {  5,  6, 12, 15, 14, 11,  5 },
+                {  0,  1,  2,  1,  0,  1,  0 }
+                };
 
-            MaglevControl.PrintMatrix((int[,])MaglevControl.ScanGuidewayMatrix(track));
+                int windowSize = 3; // длина отрезка для оценки искривления
+                int thresholdSum = 25; // порог суммы отклонений: если выше — участок считаем опасным
+
+                var warningMatrix = ScanGuidewayMatrix(trackMatrix, windowSize, thresholdSum, out var maxSegmentInfo);
+
+                Console.WriteLine("Исходная матрица отклонений (мм):");
+                PrintMatrix(trackMatrix);
+
+                Console.WriteLine($"\nОкно анализа: {windowSize} точек, порог опасности: сумма > {thresholdSum}");
+                Console.WriteLine($"Максимальный сегмент искривления: строка {maxSegmentInfo.Row}, " +
+                                  $"начало колонки {maxSegmentInfo.StartCol}, сумма отклонений = {maxSegmentInfo.Sum}");
+
+                Console.WriteLine("\nПредупреждающая матрица (опасные зоны помечены '*'):");
+                PrintWarningMatrix(warningMatrix);
+
+                Console.WriteLine("\nНажмите любую клавишу для выхода...");
+                Console.ReadKey();
+            }
+
+            /// <summary>
+            /// Сканирует матрицу отклонений, находит отрезок с максимальной суммой (максимальное искривление)
+            /// и формирует предупреждающую матрицу с выделением опасных участков.
+            /// </summary>
+            public static char[,] ScanGuidewayMatrix(
+                int[,] trackMatrix,
+                int windowSize,
+                int thresholdSum,
+                out MaxSegmentInfo maxSegmentInfo)
+            {
+                int rows = trackMatrix.GetLength(0);
+                int cols = trackMatrix.GetLength(1);
+
+                // Инициализируем предупреждающую матрицу пробелами
+                char[,] warningMatrix = new char[rows, cols];
+                for (int r = 0; r < rows; r++)
+                    for (int c = 0; c < cols; c++)
+                        warningMatrix[r, c] = ' ';
+
+                maxSegmentInfo = new MaxSegmentInfo { Row = -1, StartCol = -1, Sum = int.MinValue };
+
+                for (int r = 0; r < rows; r++)
+                {
+                    // Проходим скользящим окном по строке
+                    for (int startCol = 0; startCol <= cols - windowSize; startCol++)
+                    {
+                        int sum = 0;
+                        for (int offset = 0; offset < windowSize; offset++)
+                        {
+                            sum += trackMatrix[r, startCol + offset];
+                        }
+
+                        // Обновляем максимум
+                        if (sum > maxSegmentInfo.Sum)
+                        {
+                            maxSegmentInfo.Row = r;
+                            maxSegmentInfo.StartCol = startCol;
+                            maxSegmentInfo.Sum = sum;
+                        }
+
+                        // Если сумма выше порога — помечаем эти ячейки как опасные
+                        if (sum >= thresholdSum)
+                        {
+                            for (int offset = 0; offset < windowSize; offset++)
+                            {
+                                warningMatrix[r, startCol + offset] = '*';
+                            }
+                        }
+                    }
+                }
+
+                return warningMatrix;
+            }
+
+            private static void PrintMatrix(int[,] matrix)
+            {
+                int rows = matrix.GetLength(0);
+                int cols = matrix.GetLength(1);
+                for (int r = 0; r < rows; r++)
+                {
+                    for (int c = 0; c < cols; c++)
+                    {
+                        Console.Write($"{matrix[r, c],3}");
+                    }
+                    Console.WriteLine();
+                }
+            }
+
+            private static void PrintWarningMatrix(char[,] matrix)
+            {
+                int rows = matrix.GetLength(0);
+                int cols = matrix.GetLength(1);
+                for (int r = 0; r < rows; r++)
+                {
+                    for (int c = 0; c < cols; c++)
+                    {
+                        char ch = matrix[r, c];
+                        // Для наглядности: если '*', печатаем звёздочку, иначе — прочерк или пусто
+                        Console.Write(ch == '*' ? "  *" : "  .");
+                    }
+                    Console.WriteLine();
+                }
+            }
         }
-    }
-    }
- 
+
+        // Вспомогательная структура для возврата информации о самом искривлённом сегменте
+        public struct MaxSegmentInfo
+        {
+            public int Row;
+            public int StartCol;
+            public int Sum;
+        }
+        }
+
+
