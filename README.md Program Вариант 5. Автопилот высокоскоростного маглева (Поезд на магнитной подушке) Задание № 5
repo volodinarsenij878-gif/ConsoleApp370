@@ -1,0 +1,27 @@
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+
+    namespace Program5
+    {
+    internal class Program
+    {
+        static void Main()
+        {
+            int[,] track = {
+            { 2, 3, 2, 1 },
+            { 4, 5, 6, 4 },  // эта строка имеет наибольшую сумму → будет помечена
+            { 1, 1, 2, 1 }
+        };
+
+            Console.WriteLine("Исходная матрица:");
+            object value = MaglevControl.PrintMatrix(track);
+            Console.WriteLine("\nПредупреждающая матрица (опасные участки = 999):");
+
+            MaglevControl.PrintMatrix((int[,])MaglevControl.ScanGuidewayMatrix(track));
+        }
+    }
+    }
+ 
