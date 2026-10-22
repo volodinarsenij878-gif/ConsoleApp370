@@ -1,0 +1,39 @@
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+
+    namespace Program200
+    {
+    internal class Program
+    {
+        static void Main()
+        {
+
+            Console.Write("Состояние потока (Running, Suspended, Stopped, Aborted): ");
+            string state = Console.ReadLine()?.Trim();
+            string explanation;
+
+            switch (state)
+            {
+                case "Running":
+                    explanation = "Поток выполняется на процессоре (или ожидает кванта времени).";
+                    break;
+                case "Suspended":
+                    explanation = "Поток приостановлен (Suspend), не получает кванты времени, может быть возобновлён (Resume).";
+                    break;
+                case "Stopped":
+                    explanation = "Поток корректно завершён (например, метод завершился).";
+                    break;
+                case "Aborted":
+                    explanation = "Поток принудительно остановлен (Abort), возможны незавершённые операции и исключения.";
+                    break;
+                default:
+                    Console.WriteLine("Неизвестное состояние.");
+                    return;
+            }
+            Console.WriteLine(explanation);
+        }
+    }
+    }
